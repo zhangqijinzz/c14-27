@@ -36,4 +36,15 @@ describe('MoneyScenarioViewModel', () => {
     expect(vm.getSnapshot().status).toBe('error');
     expect(vm.getSnapshot().scenarios).toHaveLength(3);
   });
+
+  it('rebuilds the conclusion when scenarios are removed', async () => {
+    const vm = new MoneyScenarioViewModel(new MemoryRepository());
+    await vm.init();
+    expect(vm.getSnapshot().conclusion.kind).toBe('comparison');
+    vm.removeScenario('balanced');
+    expect(vm.getSnapshot().conclusion.kind).toBe('comparison');
+    vm.removeScenario('growth');
+    expect(vm.getSnapshot().conclusion.kind).toBe('single');
+    expect(vm.getSnapshot().conclusion.sentences[0]).toContain('只有 1 个有效情景');
+  });
 });

@@ -1,4 +1,5 @@
 import { calculateProjection, COLORS, SAMPLE_SCENARIOS, validateScenario } from './domain';
+import { buildConclusion, type ScenarioConclusion } from './conclusion';
 import type { ScenarioRepository } from './repository';
 import type { FinanceScenario, PersistedWorkspace, ScenarioField, ScenarioProjection, ValidationErrors } from './types';
 
@@ -10,13 +11,16 @@ export interface MoneyScenarioState {
   selectedId: string;
   errors: Record<string, ValidationErrors>;
   projections: ScenarioProjection[];
+  conclusion: ScenarioConclusion;
   message: string;
 }
 
 type Listener = (state: MoneyScenarioState) => void;
 
+const EMPTY_CONCLUSION: ScenarioConclusion = { kind: 'none', sentences: [] };
+
 function initialState(): MoneyScenarioState {
-  return { status: 'loading', scenarios: [], selectedId: '', errors: {}, projections: [], message: '正在恢复最近的情景…' };
+  return { status: 'loading', scenarios: [], selectedId: '', errors: {}, projections: [], conclusion: EMPTY_CONCLUSION, message: '正在恢复最近的情景…' };
 }
 
 export class MoneyScenarioViewModel {
@@ -109,7 +113,8 @@ export class MoneyScenarioViewModel {
       if (Object.keys(scenarioErrors).length) errors[scenario.id] = scenarioErrors;
       else projections.push(calculateProjection(scenario));
     });
-    this.setState({ scenarios, selectedId, errors, projections, status: Object.keys(errors).length ? 'editing' : 'ready', message });
+    const conclusion = buildConclusion(scenarios, projections);
+    this.setState({ scenarios, selectedId, errors, projections, conclusion, status: Object.keys(errors).length ? 'editing' : 'ready', message });
   }
 
   private setState(patch: Partial<MoneyScenarioState>): void {
